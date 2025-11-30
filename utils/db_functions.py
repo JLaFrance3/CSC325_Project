@@ -6,12 +6,8 @@ import csv
 import psycopg2
 
 # Get connection with supabase db
-def getconn():
-    db_url = os.getenv("DATABASE_URL")
-    if not db_url:
-        print("DATABASE_URL not found in .env")
-        
-    return psycopg2.connect(db_url)
+def getconn(url):
+    return psycopg2.connect(url)
     
 # Used for initial setup of db. Reset tables and upload from csv file
 def setup_db(cur):
@@ -90,13 +86,13 @@ def setup_db(cur):
     ''')
 
 # Read csv file with the computers data
-def read_csv(csv_filepath):
+def read_csv(csv_filepath, data_limit):
     try:
         with open(csv_filepath, mode='r', encoding='utf-8') as f:
             reader = csv.DictReader(f)
             row_count = 0
             for row in reader:
-                if DATA_LIMIT is not None and row_count >= DATA_LIMIT:
+                if data_limit is not None and row_count >= data_limit:
                     break
                 yield row
                 row_count += 1
@@ -104,14 +100,14 @@ def read_csv(csv_filepath):
         print(f"Error reading {csv_filepath}: {e}")
 
 # Read in all data once
-def read_data(csv_filepath):
+def read_data(csv_filepath, data_limit):
     print("Reading in CSV file data...")
     brands_set = set()
     cpus_set = set()
     gpus_set = set()
     product_rows = []
     
-    for row in read_csv(csv_filepath):
+    for row in read_csv(csv_filepath, data_limit):
         # Add brands if they exist
         if row['brand']: brands_set.add(row['brand'])
         if row['cpu_brand']: brands_set.add(row['cpu_brand'])
