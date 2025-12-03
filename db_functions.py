@@ -4,13 +4,11 @@ import csv
 def getconn(db_name="computers.db"):
     """Creates a connection to a local SQLite database file."""
     conn = sqlite3.connect(db_name)
-    # Enable foreign key constraints (SQLite has them off by default)
     conn.execute("PRAGMA foreign_keys = ON;") 
     return conn
 
 def setup_db(cur):
     print("Resetting tables...")
-    # SQLite requires dropping child tables first since it lacks CASCADE DROP
     cur.execute('DROP TABLE IF EXISTS Products;')
     cur.execute('DROP TABLE IF EXISTS CPU;')
     cur.execute('DROP TABLE IF EXISTS GPU;')
@@ -118,7 +116,6 @@ def read_data(csv_filepath, data_limit):
     print("CSV read complete.\n")
     return brands_set, cpus_set, gpus_set, product_rows
 
-# --- OPTIMIZED INSERT FUNCTIONS (SQLite Version) ---
 
 def get_brand_map(cur):
     cur.execute("SELECT brand_name, brandId FROM Brands")
@@ -129,7 +126,6 @@ def insert_brands(cur, brands_set):
     if not brands_set: return
 
     values = [(b,) for b in brands_set if b]
-    # SQLite uses ? placeholders and 'executemany'
     cur.executemany("INSERT OR IGNORE INTO Brands (brand_name) VALUES (?)", values)
 
 def insert_cpus(cur, cpus_set, brand_map):

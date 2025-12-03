@@ -3,7 +3,6 @@ import sys
 import db_functions as db
 import chart_functions as charts
 
-# Configuration
 DB_NAME = "computers.db"
 CSV_PATH = "computer_prices_all.csv" 
 
@@ -41,9 +40,7 @@ def import_data():
         db.insert_products(cur, products, brand_map)
         conn.commit()
         
-        print("\n" + "="*50)
         print("SUCCESS: All data imported into 'computers.db'")
-        print("="*50)
         brands_count = cur.execute("SELECT COUNT(*) FROM Brands").fetchone()[0]
         cpus_count = cur.execute("SELECT COUNT(*) FROM CPU").fetchone()[0]
         gpus_count = cur.execute("SELECT COUNT(*) FROM GPU").fetchone()[0]
@@ -52,7 +49,6 @@ def import_data():
         print(f"  CPUs:     {cpus_count}")
         print(f"  GPUs:     {gpus_count}")
         print(f"  Products: {products_count}")
-        print("="*50 + "\n")
         
         return True
 
@@ -132,22 +128,17 @@ def show_visualizations():
         conn.close()
 
 def show_menu():
-    """Display interactive menu for user."""
-    print("\n" + "="*50)
-    print("Computer Price Analysis System")
-    print("="*50)
+    print("Computer Price Analysis")
     print("1. Import data from CSV")
     print("2. Show dashboard (all charts in one window)")
     print("3. Show all visualizations (separate windows)")
     print("4. Show specific chart")
     print("5. Exit")
-    print("="*50)
     
     choice = input("\nEnter your choice (1-5): ").strip()
     return choice
 
 def show_chart_menu():
-    """Display chart selection menu."""
     print("\nAvailable Charts:")
     print("1. Price Distribution Histogram")
     print("2. Average Price by Brand")

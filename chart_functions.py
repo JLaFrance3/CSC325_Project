@@ -27,7 +27,6 @@ def get_products_dataframe(conn):
     """
     return pd.read_sql_query(query, conn)
 
-# Option: frequency-price
 def show_price_histogram(df):
     price_data = df['price'].dropna()
     counts, bin_edges = np.histogram(price_data, bins=20)
@@ -49,7 +48,6 @@ def show_price_histogram(df):
     fig.update_layout(bargap=0.05) 
     fig.show()
 
-# Option: price
 def show_avg_price_by_brand(df):
     avg_data = df.groupby('brand')['price'].mean().reset_index()
     avg_data = avg_data.sort_values('price', ascending=False)
@@ -62,7 +60,6 @@ def show_avg_price_by_brand(df):
     )
     fig.show()
 
-# Option: grouped-price
 def show_avg_price_grouped(df):
     avg_data = df.groupby(['brand', 'device_type'])['price'].mean().reset_index()
     fig = px.bar(
@@ -76,7 +73,6 @@ def show_avg_price_grouped(df):
     )
     fig.show()
 
-# Option: tier-price
 def show_price_vs_cpu_tier(df):
     df = df.sort_values('cpu_tier')
     fig = px.scatter(
@@ -91,7 +87,6 @@ def show_price_vs_cpu_tier(df):
     )
     fig.show()
 
-# Option: boxed-price
 def show_box_price_by_type(df):
     fig = px.box(
         df,
@@ -103,13 +98,7 @@ def show_box_price_by_type(df):
     )
     fig.show()
 
-# NEW: Dashboard function that combines all charts
 def show_dashboard(df):
-    """
-    Display all charts in a single dashboard layout.
-    Uses subplots to create a comprehensive view.
-    """
-    # Create subplots: 3 rows x 2 columns
     fig = make_subplots(
         rows=3, cols=2,
         subplot_titles=(
@@ -118,18 +107,17 @@ def show_dashboard(df):
             'Average Price by Manufacturer & Type',
             'Price vs. CPU Tier',
             'Price Distribution: Laptop vs Desktop',
-            ''  # Empty 6th slot
+            '' 
         ),
         specs=[
             [{'type': 'bar'}, {'type': 'bar'}],
             [{'type': 'bar'}, {'type': 'scatter'}],
-            [{'type': 'box'}, {'type': 'table'}]  # Added table for stats
+            [{'type': 'box'}, {'type': 'table'}]
         ],
         vertical_spacing=0.12,
         horizontal_spacing=0.1
     )
     
-    # 1. Price Histogram (Row 1, Col 1)
     price_data = df['price'].dropna()
     counts, bin_edges = np.histogram(price_data, bins=20)
     bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
@@ -139,7 +127,6 @@ def show_dashboard(df):
         row=1, col=1
     )
     
-    # 2. Average Price by Brand (Row 1, Col 2)
     avg_data = df.groupby('brand')['price'].mean().reset_index()
     avg_data = avg_data.sort_values('price', ascending=False).head(10)  # Top 10
     
@@ -148,7 +135,6 @@ def show_dashboard(df):
         row=1, col=2
     )
     
-    # 3. Grouped Price (Row 2, Col 1)
     grouped_data = df.groupby(['brand', 'device_type'])['price'].mean().reset_index()
     
     for device_type in grouped_data['device_type'].unique():
@@ -159,7 +145,6 @@ def show_dashboard(df):
             row=2, col=1
         )
     
-    # 4. Price vs CPU Tier Scatter (Row 2, Col 2)
     df_sorted = df.sort_values('cpu_tier')
     
     for device_type in df_sorted['device_type'].unique():
@@ -177,7 +162,6 @@ def show_dashboard(df):
             row=2, col=2
         )
     
-    # 5. Box Plot (Row 3, Col 1)
     for device_type in df['device_type'].unique():
         subset = df[df['device_type'] == device_type]
         fig.add_trace(
@@ -185,7 +169,6 @@ def show_dashboard(df):
             row=3, col=1
         )
     
-    # 6. Summary Statistics Table (Row 3, Col 2)
     stats = df.groupby('device_type')['price'].agg(['count', 'mean', 'median', 'min', 'max']).reset_index()
     stats.columns = ['Type', 'Count', 'Mean', 'Median', 'Min', 'Max']
     stats['Mean'] = stats['Mean'].round(2)
@@ -209,7 +192,6 @@ def show_dashboard(df):
         row=3, col=2
     )
     
-    # Update layout
     fig.update_layout(
         title_text="Computer Price Analysis Dashboard",
         title_font_size=20,
@@ -224,7 +206,6 @@ def show_dashboard(df):
         )
     )
     
-    # Update axes labels
     fig.update_xaxes(title_text="Price ($)", row=1, col=1)
     fig.update_yaxes(title_text="Frequency", row=1, col=1)
     
