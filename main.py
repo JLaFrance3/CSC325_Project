@@ -6,8 +6,8 @@ import chart_functions as charts
 DB_NAME = "computers.db"
 CSV_PATH = "computer_prices_all.csv" 
 
+# Load csv data into database
 def import_data():
-    """Import CSV data into the database."""
     if not os.path.exists(CSV_PATH):
         print(f"Error: The file '{CSV_PATH}' was not found.")
         return False
@@ -22,25 +22,26 @@ def import_data():
         return False
 
     try:
+        # Create table schemata
         db.setup_db(cur)
         conn.commit()
 
         data_limit = None
         
+        # Read in table data from the csv
         brands, cpus, gpus, products = db.read_data(CSV_PATH, data_limit)
 
+        # Insert csv data into tables
         db.insert_brands(cur, brands)
         conn.commit()
-
         brand_map = db.get_brand_map(cur)
-
         db.insert_cpus(cur, cpus, brand_map)
         db.insert_gpus(cur, gpus, brand_map)
-        
         db.insert_products(cur, products, brand_map)
         conn.commit()
-        
         print("SUCCESS: All data imported into 'computers.db'")
+
+        # Query the counts from all tables for display
         brands_count = cur.execute("SELECT COUNT(*) FROM Brands").fetchone()[0]
         cpus_count = cur.execute("SELECT COUNT(*) FROM CPU").fetchone()[0]
         gpus_count = cur.execute("SELECT COUNT(*) FROM GPU").fetchone()[0]
@@ -61,8 +62,8 @@ def import_data():
         cur.close()
         conn.close()
 
+# Show all table visualizations on one page
 def show_dashboard():
-    """Display interactive dashboard with all charts."""
     if not os.path.exists(DB_NAME):
         print(f"Error: Database '{DB_NAME}' not found. Please import data first.")
         return
@@ -87,8 +88,8 @@ def show_dashboard():
     finally:
         conn.close()
 
+# Display each table visualization on its own page
 def show_visualizations():
-    """Display data visualizations from the database."""
     if not os.path.exists(DB_NAME):
         print(f"Error: Database '{DB_NAME}' not found. Please import data first.")
         return
@@ -127,6 +128,7 @@ def show_visualizations():
     finally:
         conn.close()
 
+# Main menu selection
 def show_menu():
     print("Computer Price Analysis")
     print("1. Import data from CSV")
@@ -138,6 +140,7 @@ def show_menu():
     choice = input("\nEnter your choice (1-5): ").strip()
     return choice
 
+# Individual chart selection
 def show_chart_menu():
     print("\nAvailable Charts:")
     print("1. Price Distribution Histogram")
@@ -149,8 +152,8 @@ def show_chart_menu():
     choice = input("\nEnter chart number (1-5): ").strip()
     return choice
 
+# Display single chart
 def show_single_chart(chart_num):
-    """Show a specific chart."""
     if not os.path.exists(DB_NAME):
         print(f"Error: Database '{DB_NAME}' not found. Please import data first.")
         return
@@ -180,8 +183,8 @@ def show_single_chart(chart_num):
     finally:
         conn.close()
 
+# Main function loop
 def main():
-    """Main program loop."""
     while True:
         choice = show_menu()
         

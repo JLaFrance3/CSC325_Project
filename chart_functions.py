@@ -9,11 +9,8 @@ from plotly.subplots import make_subplots
 import numpy as np
 import db_functions as db
 
+# Query all products with joined brand and CPU tier information. Returns dataframe
 def get_products_dataframe(conn):
-    """
-    Query all products with joined brand and CPU tier information.
-    Returns a pandas DataFrame ready for visualization.
-    """
     query = """
     SELECT 
         p.*,
@@ -27,6 +24,7 @@ def get_products_dataframe(conn):
     """
     return pd.read_sql_query(query, conn)
 
+# Price distribution
 def show_price_histogram(df):
     price_data = df['price'].dropna()
     counts, bin_edges = np.histogram(price_data, bins=20)
@@ -48,6 +46,7 @@ def show_price_histogram(df):
     fig.update_layout(bargap=0.05) 
     fig.show()
 
+# Brand price averages
 def show_avg_price_by_brand(df):
     avg_data = df.groupby('brand')['price'].mean().reset_index()
     avg_data = avg_data.sort_values('price', ascending=False)
@@ -60,6 +59,7 @@ def show_avg_price_by_brand(df):
     )
     fig.show()
 
+# Brand price grouped by device type
 def show_avg_price_grouped(df):
     avg_data = df.groupby(['brand', 'device_type'])['price'].mean().reset_index()
     fig = px.bar(
@@ -73,6 +73,7 @@ def show_avg_price_grouped(df):
     )
     fig.show()
 
+# Scatter of price vs cpu tier
 def show_price_vs_cpu_tier(df):
     df = df.sort_values('cpu_tier')
     fig = px.scatter(
@@ -87,6 +88,7 @@ def show_price_vs_cpu_tier(df):
     )
     fig.show()
 
+# Box/whisker for device type
 def show_box_price_by_type(df):
     fig = px.box(
         df,
@@ -98,6 +100,7 @@ def show_box_price_by_type(df):
     )
     fig.show()
 
+# Display all charts on single dashboard
 def show_dashboard(df):
     fig = make_subplots(
         rows=3, cols=2,

@@ -1,12 +1,13 @@
 import sqlite3
 import csv
 
+# Get connection with database
 def getconn(db_name="computers.db"):
-    """Creates a connection to a local SQLite database file."""
     conn = sqlite3.connect(db_name)
     conn.execute("PRAGMA foreign_keys = ON;") 
     return conn
 
+# Set up the database by clearing existing tables and adding the table schemas
 def setup_db(cur):
     print("Resetting tables...")
     cur.execute('DROP TABLE IF EXISTS Products;')
@@ -77,6 +78,7 @@ def setup_db(cur):
         );
     ''')
 
+# Read data from csv file
 def read_csv(csv_filepath, data_limit):
     try:
         with open(csv_filepath, mode='r', encoding='utf-8') as f:
@@ -90,6 +92,7 @@ def read_csv(csv_filepath, data_limit):
     except Exception as e:
         print(f"Error reading {csv_filepath}: {e}")
 
+# Read data from the csv rows and add to table sets
 def read_data(csv_filepath, data_limit):
     print("Reading in CSV file data...")
     brands_set = set()
@@ -116,11 +119,12 @@ def read_data(csv_filepath, data_limit):
     print("CSV read complete.\n")
     return brands_set, cpus_set, gpus_set, product_rows
 
-
+# Get brands from table. Values used as foreign keys in other tables
 def get_brand_map(cur):
     cur.execute("SELECT brand_name, brandId FROM Brands")
     return {row[0]: row[1] for row in cur.fetchall()}
 
+# Insert brands into table
 def insert_brands(cur, brands_set):
     print(f"Populating Brands table ({len(brands_set)} items)...")
     if not brands_set: return
@@ -128,6 +132,7 @@ def insert_brands(cur, brands_set):
     values = [(b,) for b in brands_set if b]
     cur.executemany("INSERT OR IGNORE INTO Brands (brand_name) VALUES (?)", values)
 
+# Insert CPUs into table
 def insert_cpus(cur, cpus_set, brand_map):
     print(f"Populating CPU table ({len(cpus_set)} items)...")
     values = []
@@ -153,6 +158,7 @@ def insert_cpus(cur, cpus_set, brand_map):
         """
         cur.executemany(query, values)
 
+# Insert GPUs into table
 def insert_gpus(cur, gpus_set, brand_map):
     print(f"Populating GPU table ({len(gpus_set)} items)...")
     values = []
@@ -172,6 +178,7 @@ def insert_gpus(cur, gpus_set, brand_map):
         query = "INSERT OR IGNORE INTO GPU (gpu_model, brandId, gpu_tier, vram_gb) VALUES (?, ?, ?, ?)"
         cur.executemany(query, values)
 
+# Insert products into table
 def insert_products(cur, product_rows, brand_map):
     print(f"Populating Products table ({len(product_rows)} items)...")
     values = []
