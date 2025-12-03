@@ -9,14 +9,12 @@ CSV_PATH = "computer_prices_all.csv"
 
 def import_data():
     """Import CSV data into the database."""
-    # Check if CSV exists before starting
     if not os.path.exists(CSV_PATH):
         print(f"Error: The file '{CSV_PATH}' was not found.")
         return False
 
     print(f"Connecting to local SQLite database: {DB_NAME}...")
 
-    # 1. Connect (This creates the file if it doesn't exist)
     try:
         conn = db.getconn(DB_NAME)
         cur = conn.cursor()
@@ -25,20 +23,15 @@ def import_data():
         return False
 
     try:
-        # 2. Reset Tables
         db.setup_db(cur)
         conn.commit()
 
-        # 3. Read Data
-        # Set to None to read all rows. 
-        # For testing, limit to 100 rows.
         data_limit = None
         
         brands, cpus, gpus, products = db.read_data(CSV_PATH, data_limit)
 
-        # 4. Insert Data
         db.insert_brands(cur, brands)
-        conn.commit() # Save brands so we can query IDs
+        conn.commit()
 
         brand_map = db.get_brand_map(cur)
 
@@ -48,15 +41,17 @@ def import_data():
         db.insert_products(cur, products, brand_map)
         conn.commit()
         
-        # 5. Show statistics
-        stats = db.get_database_stats(cur)
         print("\n" + "="*50)
         print("SUCCESS: All data imported into 'computers.db'")
         print("="*50)
-        print(f"  Brands:   {stats['brands']}")
-        print(f"  CPUs:     {stats['cpus']}")
-        print(f"  GPUs:     {stats['gpus']}")
-        print(f"  Products: {stats['products']}")
+        brands_count = cur.execute("SELECT COUNT(*) FROM Brands").fetchone()[0]
+        cpus_count = cur.execute("SELECT COUNT(*) FROM CPU").fetchone()[0]
+        gpus_count = cur.execute("SELECT COUNT(*) FROM GPU").fetchone()[0]
+        products_count = cur.execute("SELECT COUNT(*) FROM Products").fetchone()[0]
+        print(f"  Brands:   {brands_count}")
+        print(f"  CPUs:     {cpus_count}")
+        print(f"  GPUs:     {gpus_count}")
+        print(f"  Products: {products_count}")
         print("="*50 + "\n")
         
         return True
@@ -70,6 +65,32 @@ def import_data():
         cur.close()
         conn.close()
 
+def show_dashboard():
+    """Display interactive dashboard with all charts."""
+    if not os.path.exists(DB_NAME):
+        print(f"Error: Database '{DB_NAME}' not found. Please import data first.")
+        return
+
+    print(f"Connecting to database: {DB_NAME}...")
+    
+    try:
+        conn = db.getconn(DB_NAME)
+        
+        print("Loading data from database...")
+        df = charts.get_products_dataframe(conn)
+        print(f"Loaded {len(df)} products.\n")
+        
+        print("Generating dashboard...")
+        charts.show_dashboard(df)
+        
+        print("\nDashboard displayed in your browser!")
+        
+    except Exception as e:
+        print(f"Error generating dashboard: {e}")
+    
+    finally:
+        conn.close()
+
 def show_visualizations():
     """Display data visualizations from the database."""
     if not os.path.exists(DB_NAME):
@@ -81,23 +102,26 @@ def show_visualizations():
     try:
         conn = db.getconn(DB_NAME)
         
-        print("\nGenerating visualizations...\n")
+        print("Loading data from database...")
+        df = charts.get_products_dataframe(conn)
+        print(f"Loaded {len(df)} products.\n")
         
-        # Generate all available charts
+        print("Generating visualizations...\n")
+        
         print("1. Price Distribution Histogram")
-        charts.show_price_histogram(conn)
+        charts.show_price_histogram(df)
         
         print("2. Average Price by Brand")
-        charts.show_avg_price_by_brand(conn)
+        charts.show_avg_price_by_brand(df)
         
         print("3. Average Price Grouped by Type")
-        charts.show_avg_price_grouped(conn)
+        charts.show_avg_price_grouped(df)
         
         print("4. Price vs CPU Tier")
-        charts.show_price_vs_cpu_tier(conn)
+        charts.show_price_vs_cpu_tier(df)
         
         print("5. Price Distribution: Laptop vs Desktop")
-        charts.show_box_price_by_type(conn)
+        charts.show_box_price_by_type(df)
         
         print("\nAll visualizations displayed!")
         
@@ -113,12 +137,13 @@ def show_menu():
     print("Computer Price Analysis System")
     print("="*50)
     print("1. Import data from CSV")
-    print("2. Show all visualizations")
-    print("3. Show specific chart")
-    print("4. Exit")
+    print("2. Show dashboard (all charts in one window)")
+    print("3. Show all visualizations (separate windows)")
+    print("4. Show specific chart")
+    print("5. Exit")
     print("="*50)
     
-    choice = input("\nEnter your choice (1-4): ").strip()
+    choice = input("\nEnter your choice (1-5): ").strip()
     return choice
 
 def show_chart_menu():
@@ -142,16 +167,20 @@ def show_single_chart(chart_num):
     try:
         conn = db.getconn(DB_NAME)
         
+        print("Loading data from database...")
+        df = charts.get_products_dataframe(conn)
+        print(f"Loaded {len(df)} products.\n")
+        
         if chart_num == '1':
-            charts.show_price_histogram(conn)
+            charts.show_price_histogram(df)
         elif chart_num == '2':
-            charts.show_avg_price_by_brand(conn)
+            charts.show_avg_price_by_brand(df)
         elif chart_num == '3':
-            charts.show_avg_price_grouped(conn)
+            charts.show_avg_price_grouped(df)
         elif chart_num == '4':
-            charts.show_price_vs_cpu_tier(conn)
+            charts.show_price_vs_cpu_tier(df)
         elif chart_num == '5':
-            charts.show_box_price_by_type(conn)
+            charts.show_box_price_by_type(df)
         else:
             print("Invalid chart number.")
             
@@ -168,11 +197,13 @@ def main():
         if choice == '1':
             import_data()
         elif choice == '2':
-            show_visualizations()
+            show_dashboard()
         elif choice == '3':
+            show_visualizations()
+        elif choice == '4':
             chart_choice = show_chart_menu()
             show_single_chart(chart_choice)
-        elif choice == '4':
+        elif choice == '5':
             print("\nExiting... Goodbye!")
             sys.exit(0)
         else:
